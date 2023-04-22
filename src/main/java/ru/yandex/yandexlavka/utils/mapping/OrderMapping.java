@@ -19,6 +19,9 @@ public class OrderMapping {
         dto.setWeight(order.getWeight());
         dto.setCost(order.getCost().intValue());
         dto.setRegions(order.getRegion());
+        if (order.getCompletedTime() != null) {
+            dto.setCompleted_time(order.getCompletedTime().toString());
+        }
         List<String> deliveryHours = new ArrayList<>();
         for (IntervalTime time : order.getDeliveryHours()) {
             deliveryHours.add(time.getStartTime() + "-" + time.getEndTime());

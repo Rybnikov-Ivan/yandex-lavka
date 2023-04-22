@@ -44,6 +44,11 @@ public class IntervalTime {
         this.order = order;
     }
 
+    public IntervalTime(LocalTime startTime, LocalTime endTime) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
     public IntervalTime() {
     }
 }

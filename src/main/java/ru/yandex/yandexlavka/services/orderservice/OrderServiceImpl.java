@@ -11,7 +11,7 @@ import ru.yandex.yandexlavka.repositories.CourierRepository;
 import ru.yandex.yandexlavka.repositories.OrderRepository;
 import ru.yandex.yandexlavka.utils.mapping.OrderMapping;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Service
@@ -52,7 +52,8 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException();
         }
         if (courier.getOrders().contains(order)) {
-            order.setCompletedTime(LocalDateTime.parse(completeOrderDto.getComplete_time()));
+            order.setCompletedTime(ZonedDateTime.parse(completeOrderDto.getComplete_time()));
+            orderRepository.save(order);
         } else {
             throw new RuntimeException();
         }
