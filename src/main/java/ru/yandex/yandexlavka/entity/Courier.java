@@ -29,6 +29,18 @@ public class Courier {
     @OneToMany(mappedBy = "courier", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<IntervalTime> workingHours;
 
+    @Column(name = "MAX_WEIGHT", nullable = false)
+    private float maxWeight;
+
+    @Column(name = "MAX_COUNT", nullable = false)
+    private int maxCount;
+
+    @Column(name = "FIRST_ORDER_TIME", nullable = false)
+    private int firstOrderTime;
+
+    @Column(name = "NEXT_ORDER_TIME", nullable = false)
+    private int nextOrderTime;
+
     @OneToMany(mappedBy = "courier", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Order> orders;
 

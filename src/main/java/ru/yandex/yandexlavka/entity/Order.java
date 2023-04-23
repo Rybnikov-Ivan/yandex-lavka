@@ -6,7 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Getter
@@ -37,7 +38,10 @@ public class Order {
     private Courier courier;
 
     @Column(name = "COMPLETED_TIME")
-    private LocalDateTime completedTime;
+    private ZonedDateTime completedTime;
+
+    @Column(name = "ASSIGN_TIME")
+    private LocalTime assignTime;
 
     public Order() {
 

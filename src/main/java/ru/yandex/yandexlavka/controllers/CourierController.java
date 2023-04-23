@@ -2,15 +2,19 @@ package ru.yandex.yandexlavka.controllers;
 
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.yandexlavka.entity.dto.CourierAssignDto;
 import ru.yandex.yandexlavka.entity.dto.CourierDto;
 import ru.yandex.yandexlavka.entity.dto.request.CreateCourierRequest;
+import ru.yandex.yandexlavka.entity.dto.response.AssignOrdersResponse;
 import ru.yandex.yandexlavka.entity.dto.response.CreateCourierResponse;
 import ru.yandex.yandexlavka.entity.dto.response.GetCouriersResponse;
 import ru.yandex.yandexlavka.services.courierservice.CourierService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -58,6 +62,23 @@ public class CourierController {
             }
         }
         CreateCourierResponse response = new CreateCourierResponse(request.getCouriers());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @CrossOrigin
+    @GetMapping(value = "/couriers/assignments", produces = "application/json")
+    public ResponseEntity<?> getAssignmentsCouriers(
+            @RequestParam(value = "date", defaultValue = "#{T(java.time.LocalDate).now()}")
+            @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+            @RequestParam(value = "courier_id", defaultValue = "0") Long courierId)
+    {
+        List<CourierAssignDto> couriersDto;
+        try {
+            couriersDto = courierService.getCouriersWithOrders(date, courierId);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        AssignOrdersResponse response = new AssignOrdersResponse(date, couriersDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
