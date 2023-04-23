@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.yandexlavka.entity.dto.CourierAssignDto;
 import ru.yandex.yandexlavka.entity.dto.CourierDto;
+import ru.yandex.yandexlavka.entity.dto.CourierMetaInfoDto;
 import ru.yandex.yandexlavka.entity.dto.request.CreateCourierRequest;
 import ru.yandex.yandexlavka.entity.dto.response.AssignOrdersResponse;
 import ru.yandex.yandexlavka.entity.dto.response.CreateCourierResponse;
@@ -38,7 +39,7 @@ public class CourierController {
     }
 
     @CrossOrigin
-    @GetMapping(value = "/couriers/{id}", produces = "application/json")
+    @GetMapping(value = "/couriers/{courier_id}", produces = "application/json")
     public ResponseEntity<?> getCourierById(@PathVariable Long id) {
         try {
             CourierDto courier = courierService.getCourierById(id);
@@ -70,8 +71,7 @@ public class CourierController {
     public ResponseEntity<?> getAssignmentsCouriers(
             @RequestParam(value = "date", defaultValue = "#{T(java.time.LocalDate).now()}")
             @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
-            @RequestParam(value = "courier_id", defaultValue = "0") Long courierId)
-    {
+            @RequestParam(value = "courier_id", defaultValue = "0") Long courierId) {
         List<CourierAssignDto> couriersDto;
         try {
             couriersDto = courierService.getCouriersWithOrders(date, courierId);
@@ -79,6 +79,24 @@ public class CourierController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         AssignOrdersResponse response = new AssignOrdersResponse(date, couriersDto);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @CrossOrigin
+    @GetMapping(value = "/couriers/meta-info/{courier_id}", produces = "application/json")
+    public ResponseEntity<?> getRatingOfCourier(
+            @PathVariable Long courier_id,
+            @RequestParam(value = "start_date")
+            @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(value = "end_date")
+            @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate)
+    {
+        CourierMetaInfoDto response;
+        try {
+            response = courierService.getRatingAndEarning(courier_id, startDate, endDate);
+        } catch (Exception exception) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

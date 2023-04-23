@@ -21,5 +21,13 @@ public class Constants {
     public static final int FIRST_ORDER_TIME_AUTO = 8;
     public static final int NEXT_ORDER_TIME_AUTO = 4;
 
+    public static final int EARNING_RATE_FOOT = 2;
+    public static final int EARNING_RATE_BIKE = 3;
+    public static final int EARNING_RATE_AUTO = 4;
+
+    public static final int RATING_RATE_FOOT = 3;
+    public static final int RATING_RATE_BIKE = 2;
+    public static final int RATING_RATE_AUTO = 1;
+
     public static final double NEXT_RATE_COST = 0.8;
 }

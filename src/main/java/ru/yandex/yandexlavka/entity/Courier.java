@@ -8,11 +8,11 @@ import ru.yandex.yandexlavka.entity.enums.CourierType;
 
 import java.util.List;
 
-@Entity
 @Getter
 @Setter
 @AllArgsConstructor
-@Table(name = "COURIERS")
+@Entity(name = "yandex_lavka_Courier")
+@Table(name = "YANDEX_LAVKA_COURIER")
 public class Courier {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +23,7 @@ public class Courier {
     private CourierType courierType;
 
     @ElementCollection
-    @CollectionTable(name = "REGIONS")
+    @CollectionTable(name = "YANDEX_LAVKA_REGIONS")
     private List<Integer> regions;
 
     @OneToMany(mappedBy = "courier", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -40,6 +40,12 @@ public class Courier {
 
     @Column(name = "NEXT_ORDER_TIME", nullable = false)
     private int nextOrderTime;
+
+    @Column(name = "EARNING_RATE", nullable = false)
+    private int earningRate;
+
+    @Column(name = "RATING_RATE", nullable = false)
+    private int ratingRate;
 
     @OneToMany(mappedBy = "courier", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Order> orders;
