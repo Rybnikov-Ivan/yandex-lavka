@@ -6,11 +6,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.yandexlavka.entity.dto.CourierAssignDto;
+import ru.yandex.yandexlavka.entity.dto.assignments.CouriersAssignDto;
 import ru.yandex.yandexlavka.entity.dto.CourierDto;
 import ru.yandex.yandexlavka.entity.dto.CourierMetaInfoDto;
 import ru.yandex.yandexlavka.entity.dto.request.CreateCourierRequest;
-import ru.yandex.yandexlavka.entity.dto.response.AssignOrdersResponse;
 import ru.yandex.yandexlavka.entity.dto.response.CreateCourierResponse;
 import ru.yandex.yandexlavka.entity.dto.response.GetCouriersResponse;
 import ru.yandex.yandexlavka.services.courierservice.CourierService;
@@ -72,13 +71,12 @@ public class CourierController {
             @RequestParam(value = "date", defaultValue = "#{T(java.time.LocalDate).now()}")
             @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @RequestParam(value = "courier_id", defaultValue = "0") Long courierId) {
-        List<CourierAssignDto> couriersDto;
+        CouriersAssignDto response;
         try {
-            couriersDto = courierService.getCouriersWithOrders(date, courierId);
+            response = courierService.getCouriersWithOrders(date, courierId);
         } catch (Exception ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        AssignOrdersResponse response = new AssignOrdersResponse(date, couriersDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

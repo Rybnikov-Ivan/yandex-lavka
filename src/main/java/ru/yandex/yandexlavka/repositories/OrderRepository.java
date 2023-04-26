@@ -12,9 +12,5 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    @Query("select o from yandex_lavka_Order o where o.courier.id = :courierId and :startDate <= o.completedTime and o.completedTime < :endDate")
-    List<Order> getOrderByCourier(
-            @Param("courierId") Long courierId,
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
+
 }
