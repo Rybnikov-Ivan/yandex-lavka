@@ -6,15 +6,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZonedDateTime;
 import java.util.List;
 
 @Getter
 @Setter
-@Entity
 @AllArgsConstructor
-@Table(name = "ORDERS")
+@Entity(name = "yandex_lavka_Order")
+@Table(name = "YANDEX_LAVKA_ORDER")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +38,7 @@ public class Order {
     private Courier courier;
 
     @Column(name = "COMPLETED_TIME")
-    private ZonedDateTime completedTime;
+    private LocalDateTime completedTime;
 
     @Column(name = "ASSIGN_TIME")
     private LocalTime assignTime;

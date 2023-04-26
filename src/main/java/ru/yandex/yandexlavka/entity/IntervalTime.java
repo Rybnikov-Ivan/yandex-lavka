@@ -7,11 +7,11 @@ import lombok.Setter;
 
 import java.time.LocalTime;
 
-@Entity
 @Getter
 @Setter
 @AllArgsConstructor
-@Table(name = "INTERVAL_TIME")
+@Entity(name = "yandex_lavka_IntervalTime")
+@Table(name = "YANDEX_LAVKA_INTERVAL_TIME")
 public class IntervalTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
