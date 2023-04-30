@@ -5,6 +5,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.yandex.yandexlavka.entity.Courier;
 import ru.yandex.yandexlavka.entity.Order;
+import ru.yandex.yandexlavka.entity.OrderGroup;
 import ru.yandex.yandexlavka.entity.dto.CompleteOrderDto;
 import ru.yandex.yandexlavka.entity.dto.OrderDto;
 import ru.yandex.yandexlavka.repositories.CourierRepository;
@@ -47,16 +48,22 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void completeOrder(CompleteOrderDto completeOrderDto) {
-        Courier courier = courierRepository.findById(completeOrderDto.getCourier_id()).orElse(null);
-        Order order = orderRepository.findById(completeOrderDto.getOrder_id()).orElse(null);
+        Courier courier = courierRepository.findById(completeOrderDto.getCourierId()).orElse(null);
+        Order order = orderRepository.findById(completeOrderDto.getOrderId()).orElse(null);
         if (courier == null || order == null) {
             throw new RuntimeException();
         }
-        if (courier.getOrders().contains(order)) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-            order.setCompletedTime(LocalDateTime.parse(completeOrderDto.getComplete_time(), formatter));
-            orderRepository.save(order);
-        } else {
+        boolean isCompleted = false;
+        for (OrderGroup orderGroup : courier.getOrderGroups()) {
+            if (orderGroup.getOrders().contains(order) && order.getCompletedTime() == null) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                order.setCompletedTime(LocalDateTime.parse(completeOrderDto.getCompleteTime(), formatter));
+                orderRepository.save(order);
+                isCompleted = true;
+                break;
+            }
+        }
+        if (!isCompleted) {
             throw new RuntimeException();
         }
     }

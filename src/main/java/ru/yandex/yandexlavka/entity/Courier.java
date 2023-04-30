@@ -48,7 +48,7 @@ public class Courier {
     private int ratingRate;
 
     @OneToMany(mappedBy = "courier", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Order> orders;
+    private List<OrderGroup> orderGroups;
 
     public Courier() {
 

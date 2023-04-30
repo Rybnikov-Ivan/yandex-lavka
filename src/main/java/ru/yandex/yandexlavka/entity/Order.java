@@ -7,7 +7,6 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -33,15 +32,12 @@ public class Order {
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<IntervalTime> deliveryHours;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "COURIER_ID")
-    private Courier courier;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ORDER_GROUP_ID")
+    private OrderGroup orderGroup;
 
     @Column(name = "COMPLETED_TIME")
     private LocalDateTime completedTime;
-
-    @Column(name = "ASSIGN_TIME")
-    private LocalTime assignTime;
 
     public Order() {
 

@@ -5,10 +5,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.yandex.yandexlavka.entity.Courier;
 import ru.yandex.yandexlavka.entity.Order;
-import ru.yandex.yandexlavka.entity.dto.CourierAssignDto;
+import ru.yandex.yandexlavka.entity.OrderGroup;
 import ru.yandex.yandexlavka.entity.dto.CourierDto;
 import ru.yandex.yandexlavka.entity.dto.CourierMetaInfoDto;
-import ru.yandex.yandexlavka.entity.dto.OrderDto;
+import ru.yandex.yandexlavka.entity.dto.assignments.CouriersAssignDto;
+import ru.yandex.yandexlavka.entity.dto.assignments.OrderGroupDto;
+import ru.yandex.yandexlavka.entity.dto.assignments.OrdersDto;
 import ru.yandex.yandexlavka.entity.enums.CourierType;
 import ru.yandex.yandexlavka.repositories.CourierRepository;
 import ru.yandex.yandexlavka.repositories.OrderRepository;
@@ -17,8 +19,9 @@ import ru.yandex.yandexlavka.utils.mapping.CourierMapping;
 import ru.yandex.yandexlavka.utils.mapping.OrderMapping;
 
 import java.math.BigDecimal;
-import java.time.*;
-import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -44,7 +47,7 @@ public class CourierServiceImpl implements CourierService{
         Courier courier = courierMapping.mapToCourierEntity(dto);
         setParametersForCourier(courier);
         courierRepository.save(courier);
-        dto.setCourier_id(courier.getId());
+        dto.setCourierId(courier.getId());
     }
 
     @Override
@@ -55,68 +58,84 @@ public class CourierServiceImpl implements CourierService{
     }
 
     @Override
-    public List<CourierAssignDto> getCouriersWithOrders(LocalDate date, Long courierId) {
-        List<CourierAssignDto> courierAssignDtoList = new ArrayList<>();
+    public CouriersAssignDto getCouriersWithOrders(LocalDate date, Long courierId) {
+        CouriersAssignDto response = new CouriersAssignDto(date.toString());
         if (courierId == 0) {
             List<Courier> couriers = courierRepository.findAll();
             for (Courier courier : couriers) {
-                if (courier.getOrders().size() > 0) {
-                    getOrdersAssignCourier(courier, courierAssignDtoList);
+                if (courier.getOrderGroups().size() > 0) {
+                    getOrdersAssignCourier(courier, response);
                 }
             }
         } else {
             Courier courier = courierRepository.findById(courierId).orElseThrow();
-            if (courier.getOrders() != null) {
-                getOrdersAssignCourier(courier, courierAssignDtoList);
+            if (courier.getOrderGroups() != null) {
+                getOrdersAssignCourier(courier, response);
             }
         }
-        return courierAssignDtoList;
+        return response;
+    }
+
+    private void getOrdersAssignCourier(Courier courier, CouriersAssignDto response) {
+        OrdersDto couriersDto = new OrdersDto(courier.getId());
+        for (OrderGroup group : courier.getOrderGroups()) {
+            OrderGroupDto orderGroupDto = new OrderGroupDto(group.getId());
+            for (Order order : group.getOrders()) {
+                orderGroupDto.getOrders().add(orderMapping.mapToOrderDto(order));
+            }
+            couriersDto.getOrderGroupDto().add(orderGroupDto);
+        }
+        response.getCouriers().add(couriersDto);
     }
 
     @Override
     public CourierMetaInfoDto getRatingAndEarning(Long courierId, LocalDate startDate, LocalDate endDate) {
         Courier courier = courierRepository.findById(courierId).orElseThrow();
-        List<Order> orders = orderRepository.getOrderByCourier(courierId, LocalDateTime.of(startDate, LocalTime.MIN), LocalDateTime.of(endDate, LocalTime.MIN));
-        if (orders.isEmpty()) {
+
+        if (courier.getOrderGroups().isEmpty()) {
             throw new NullPointerException();
         }
 
         CourierDto dto = courierMapping.mapToCourierDto(courier);
         CourierMetaInfoDto courierMetaInfoDto = new CourierMetaInfoDto(
-                dto.getCourier_id(),
-                dto.getCourier_type(),
+                dto.getCourierId(),
+                dto.getCourierType(),
                 dto.getRegions(),
-                dto.getWorking_hours());
-        courierMetaInfoDto.setEarnings(getEarningByCourier(courier, orders));
-        courierMetaInfoDto.setRating(getRatingByCourier(courier, orders, startDate, endDate));
+                dto.getWorkingHours());
+        courierMetaInfoDto.setEarnings(getEarningByCourier(courier));
+        courierMetaInfoDto.setRating(getRatingByCourier(courier, startDate, endDate));
         return courierMetaInfoDto;
     }
 
-    private Integer getRatingByCourier(Courier courier, List<Order> ordersByCourier, LocalDate startDate, LocalDate endDate) {
+    private Integer getRatingByCourier(Courier courier, LocalDate startDate, LocalDate endDate) {
         Period period = Period.between(startDate, endDate);
         int hours = (period.getYears() * 8760) + (period.getMonths() * 672) + (period.getDays() * 24);
-        return (ordersByCourier.size() / hours) * courier.getRatingRate();
+        int countOrder = 0;
+        for (OrderGroup orderGroup : courier.getOrderGroups()) {
+            countOrder += orderGroup.getOrders().size();
+        }
+        return (countOrder / hours) * courier.getRatingRate();
     }
 
-    private Integer getEarningByCourier(Courier courier, List<Order> ordersByCourier) {
+    private Integer getEarningByCourier(Courier courier) {
         BigDecimal sum = BigDecimal.ZERO;
-        int earningRate = courier.getEarningRate();
-        for (Order order : ordersByCourier) {
-            sum = sum.add(order.getCost().multiply(BigDecimal.valueOf(earningRate)));
+        BigDecimal earningRate = BigDecimal.valueOf(courier.getEarningRate());
+        for (OrderGroup orderGroup : courier.getOrderGroups()) {
+            List<Order> orderSortByCost = orderGroup.getOrders().stream()
+                    .sorted(Comparator.comparing(Order::getCost)).toList();
+            for (int i = 0; i < orderSortByCost.size(); i++) {
+                BigDecimal cost = orderSortByCost.get(i).getCost();
+                if (i == 0) {
+                    sum = sum.add(cost).multiply(earningRate);
+                } else {
+                    BigDecimal rate = BigDecimal.valueOf(Constants.NEXT_RATE_COST);
+                    sum = sum.add(cost.multiply(earningRate).multiply(rate));
+                }
+            }
         }
         return sum.intValue();
     }
 
-    private void getOrdersAssignCourier(Courier courier, List<CourierAssignDto> courierAssignDtoList) {
-        CourierAssignDto dto = new CourierAssignDto();
-        dto.setCourier_id(courier.getId());
-        List<OrderDto> orderDtoList = new ArrayList<>();
-        for (Order order : courier.getOrders()) {
-            orderDtoList.add(orderMapping.mapToOrderDto(order));
-        }
-        dto.setOrders(orderDtoList);
-        courierAssignDtoList.add(dto);
-    }
     private void setParametersForCourier(Courier courier) {
         if (courier.getCourierType().equals(CourierType.AUTO)) {
             courier.setMaxWeight(Constants.LIMIT_WEIGHT_AUTO);
