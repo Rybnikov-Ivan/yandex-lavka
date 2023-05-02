@@ -13,26 +13,21 @@ import java.util.List;
 @Service
 public class CourierMapping {
 
-    public CourierDto mapToCourierDto(Courier courier) {
-        CourierDto dto = new CourierDto();
-        dto.setCourierId(courier.getId());
-        dto.setCourierType(courier.getCourierType());
-        dto.setRegions(courier.getRegions());
+    public CourierDto.MainCourierDto mapToCourierDto(Courier courier) {
         List<String> workingHours = new ArrayList<>();
         for (IntervalTime time : courier.getWorkingHours()) {
             workingHours.add(time.getStartTime() + "-" + time.getEndTime());
         }
-        dto.setWorkingHours(workingHours);
-        return dto;
+        return new CourierDto.MainCourierDto(courier.getId(), courier.getCourierType(), courier.getRegions(), workingHours);
     }
 
-    public Courier mapToCourierEntity(CourierDto dto) {
+    public Courier mapToCourierEntity(CourierDto.MainCourierDto dto) {
         Courier entity = new Courier();
-        entity.setId(dto.getCourierId());
-        entity.setCourierType(dto.getCourierType());
-        entity.setRegions(dto.getRegions());
+        entity.setId(dto.courierId());
+        entity.setCourierType(dto.courierType());
+        entity.setRegions(dto.regions());
         List<IntervalTime> workingHours = new ArrayList<>();
-        for (String workingHour : dto.getWorkingHours()) {
+        for (String workingHour : dto.workingHours()) {
             LocalTime startTime = LocalTime.parse(workingHour.substring(Constants.BEGIN_INDEX_IN_FROM_DATE_STRING, Constants.END_INDEX_IN_FROM_DATE_STRING));
             LocalTime endTime = LocalTime.parse(workingHour.substring(Constants.BEGIN_INDEX_IN_TO_DATE_STRING, Constants.END_INDEX_IN_TO_DATE_STRING));
             IntervalTime time = new IntervalTime(startTime, endTime, entity);

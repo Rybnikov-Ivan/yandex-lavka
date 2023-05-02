@@ -6,18 +6,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.yandexlavka.entity.dto.CompleteOrderDto;
-import ru.yandex.yandexlavka.entity.dto.assignments.CouriersAssignDto;
+import ru.yandex.yandexlavka.entity.dto.CourierDto;
 import ru.yandex.yandexlavka.entity.dto.OrderDto;
-import ru.yandex.yandexlavka.entity.dto.request.CompleteOrderRequest;
-import ru.yandex.yandexlavka.entity.dto.request.CreateOrderRequest;
-import ru.yandex.yandexlavka.entity.dto.response.CompleteOrderResponse;
-import ru.yandex.yandexlavka.entity.dto.response.CreateOrderResponse;
-import ru.yandex.yandexlavka.entity.dto.response.GetOrdersResponse;
 import ru.yandex.yandexlavka.services.assignorderservice.AssignOrderService;
 import ru.yandex.yandexlavka.services.orderservice.OrderService;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -34,8 +29,11 @@ public class OrderController {
             @RequestParam(value = "limit", defaultValue = "1") @Min(1) Integer limit
     ) {
         try {
-            List<OrderDto> orders = orderService.getAllOrders(offset, limit);
-            GetOrdersResponse response = new GetOrdersResponse(orders, offset, limit);
+            List<OrderDto.MainOrderDto> orders = orderService.getAllOrders(offset, limit);
+            if (orders.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            OrderDto.GetOrdersResponse response = new OrderDto.GetOrdersResponse(orders, offset, limit);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -43,10 +41,10 @@ public class OrderController {
     }
 
     @CrossOrigin
-    @GetMapping(value = "/orders/{id}", produces = "application/json")
-    public ResponseEntity<?> getOrderById(@PathVariable Long id) {
+    @GetMapping(value = "/orders/{order_id}", produces = "application/json")
+    public ResponseEntity<?> getOrderById(@PathVariable(value = "order_id") Long orderId) {
         try {
-            OrderDto order = orderService.getOrderById(id);
+            OrderDto.MainOrderDto order = orderService.getOrderById(orderId);
             return new ResponseEntity<>(order, HttpStatus.OK);
         } catch (Exception ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -55,36 +53,37 @@ public class OrderController {
 
     @CrossOrigin
     @PostMapping(value = "/orders", produces = "application/json")
-    public ResponseEntity<?> addOrders(@RequestBody CreateOrderRequest request) {
+    public ResponseEntity<?> addOrders(@RequestBody OrderDto.CreateOrderRequest request) {
         if (request == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        for (OrderDto dto : request.getOrders()) {
+        List<OrderDto.MainOrderDto> dtoList = new ArrayList<>();
+        for (OrderDto.MainOrderDto dto : request.orders()) {
             try {
-                orderService.addOrder(dto);
+                dtoList.add(orderService.addOrder(dto));
             } catch (Exception ex) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
-        CreateOrderResponse response = new CreateOrderResponse(request.getOrders());
+        OrderDto.CreateOrderResponse response = new OrderDto.CreateOrderResponse(dtoList);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @CrossOrigin
     @PostMapping(value = "/orders/complete", produces = "application/json")
-    public ResponseEntity<?> completeOrder(@RequestBody CompleteOrderRequest request) {
-        if (request == null || request.getComplete_info().isEmpty()) {
+    public ResponseEntity<?> completeOrder(@RequestBody OrderDto.CompleteOrderRequest request) {
+        if (request == null || request.completeOrders().isEmpty()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        for (CompleteOrderDto dto : request.getComplete_info()) {
+        for (OrderDto.CompleteOrderDto dto : request.completeOrders()) {
             try {
                 orderService.completeOrder(dto);
             } catch (Exception ex) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
-        CompleteOrderResponse response = new CompleteOrderResponse(request.getComplete_info());
-        return new ResponseEntity<>(response.getOrders(), HttpStatus.OK);
+        OrderDto.CompleteOrderResponse response = new OrderDto.CompleteOrderResponse(request.completeOrders());
+        return new ResponseEntity<>(response.orders(), HttpStatus.OK);
     }
 
     @CrossOrigin
@@ -93,7 +92,7 @@ public class OrderController {
             @RequestParam(value = "date", defaultValue = "#{T(java.time.LocalDate).now()}")
             @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date
     ) {
-        List<CouriersAssignDto> response;
+        List<CourierDto.GetCouriersAssignOrdersResponse> response;
         try {
             response = assignOrderService.assignOrders(date);
         } catch (Exception ex) {
