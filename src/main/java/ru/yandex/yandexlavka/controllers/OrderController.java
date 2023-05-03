@@ -1,5 +1,6 @@
 package ru.yandex.yandexlavka.controllers;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -53,7 +54,7 @@ public class OrderController {
 
     @CrossOrigin
     @PostMapping(value = "/orders", produces = "application/json")
-    public ResponseEntity<?> addOrders(@RequestBody OrderDto.CreateOrderRequest request) {
+    public ResponseEntity<?> addOrders(@RequestBody @Valid OrderDto.CreateOrderRequest request) {
         if (request == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -71,7 +72,7 @@ public class OrderController {
 
     @CrossOrigin
     @PostMapping(value = "/orders/complete", produces = "application/json")
-    public ResponseEntity<?> completeOrder(@RequestBody OrderDto.CompleteOrderRequest request) {
+    public ResponseEntity<?> completeOrder(@RequestBody @Valid OrderDto.CompleteOrderRequest request) {
         if (request == null || request.completeOrders().isEmpty()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -96,6 +97,10 @@ public class OrderController {
         try {
             response = assignOrderService.assignOrders(date);
         } catch (Exception ex) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        if (response.get(0).couriers().isEmpty()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 

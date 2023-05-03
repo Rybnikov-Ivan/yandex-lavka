@@ -1,6 +1,8 @@
 package ru.yandex.yandexlavka.entity.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -12,12 +14,16 @@ public class OrderDto {
     public record MainOrderDto(
             @JsonProperty("order_id")
             Long orderId,
+            @PositiveOrZero
             @JsonProperty("weight")
             Float weight,
+            @PositiveOrZero
             @JsonProperty("regions")
             Integer region,
+            @NotEmpty
             @JsonProperty("delivery_hours")
-            List<String> deliveryHours,
+            List<@NotBlank String> deliveryHours,
+            @Positive
             @JsonProperty("cost")
             Integer cost,
             @JsonProperty("completed_time")
@@ -34,8 +40,9 @@ public class OrderDto {
     ) { }
 
     public record CreateOrderRequest(
+            @NotEmpty
             @JsonProperty("orders")
-            List<MainOrderDto> orders
+            List<@Valid MainOrderDto> orders
     ) { }
 
     public record CreateOrderResponse(
@@ -44,17 +51,23 @@ public class OrderDto {
     ) { }
 
     public record CompleteOrderDto(
+            @NotNull
+            @PositiveOrZero
             @JsonProperty("courier_id")
             Long courierId,
+            @NotNull
+            @PositiveOrZero
             @JsonProperty("order_id")
             Long orderId,
+            @NotBlank
             @JsonProperty("complete_time")
             String completeTime
-    ) { }
+    ) {
+    }
 
     public record CompleteOrderRequest(
             @JsonProperty("complete_info")
-            List<CompleteOrderDto> completeOrders
+            List<@Valid CompleteOrderDto> completeOrders
     ) { }
 
     public record CompleteOrderResponse(
