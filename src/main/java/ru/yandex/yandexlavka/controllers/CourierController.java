@@ -1,5 +1,6 @@
 package ru.yandex.yandexlavka.controllers;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -49,7 +50,7 @@ public class CourierController {
 
     @CrossOrigin
     @PostMapping(value = "/couriers", produces = "application/json")
-    public ResponseEntity<?> addCouriers(@RequestBody CourierDto.CreateCourierRequest request) {
+    public ResponseEntity<?> addCouriers(@Valid @RequestBody CourierDto.CreateCourierRequest request) {
         if (request == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }

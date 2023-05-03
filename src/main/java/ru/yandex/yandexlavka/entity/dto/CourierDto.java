@@ -1,6 +1,8 @@
 package ru.yandex.yandexlavka.entity.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import ru.yandex.yandexlavka.entity.enums.CourierType;
 
@@ -12,17 +14,23 @@ public class CourierDto {
     public record MainCourierDto(
             @JsonProperty("courier_id")
             Long courierId,
+            @NotNull
             @JsonProperty("courier_type")
             CourierType courierType,
+            @NotEmpty
+            @Size(min = 1, max = 3)
             @JsonProperty("regions")
-            List<Integer> regions,
+            List<@PositiveOrZero Integer> regions,
+            @NotEmpty
             @JsonProperty("working_hours")
-            List<String> workingHours) {
+            List<@NotBlank String> workingHours) {
     }
 
     public record CreateCourierRequest(
+            @NotEmpty
             @JsonProperty("couriers")
-            List<MainCourierDto> couriers) { }
+            List<@Valid MainCourierDto> couriers) {
+    }
 
     public record CreateCourierResponse(
             @JsonProperty("couriers")
