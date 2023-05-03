@@ -7,10 +7,7 @@ import ru.yandex.yandexlavka.entity.Courier;
 import ru.yandex.yandexlavka.entity.Order;
 import ru.yandex.yandexlavka.entity.OrderGroup;
 import ru.yandex.yandexlavka.entity.dto.CourierDto;
-import ru.yandex.yandexlavka.entity.dto.CourierMetaInfoDto;
-import ru.yandex.yandexlavka.entity.dto.assignments.CouriersAssignDto;
-import ru.yandex.yandexlavka.entity.dto.assignments.OrderGroupDto;
-import ru.yandex.yandexlavka.entity.dto.assignments.OrdersDto;
+import ru.yandex.yandexlavka.entity.dto.OrderDto;
 import ru.yandex.yandexlavka.entity.enums.CourierType;
 import ru.yandex.yandexlavka.repositories.CourierRepository;
 import ru.yandex.yandexlavka.repositories.OrderRepository;
@@ -21,6 +18,7 @@ import ru.yandex.yandexlavka.utils.mapping.OrderMapping;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -36,30 +34,35 @@ public class CourierServiceImpl implements CourierService{
     private OrderMapping orderMapping;
 
     @Override
-    public List<CourierDto> getAllCouriers(int offset, int limit) {
+    public List<CourierDto.MainCourierDto> getAllCouriers(int offset, int limit) {
         return courierRepository.findAll(PageRequest.of(offset, limit))
                 .stream().map(courierMapping::mapToCourierDto)
                 .toList();
     }
 
     @Override
-    public void addCourier(CourierDto dto) {
+    public CourierDto.MainCourierDto addCourier(CourierDto.MainCourierDto dto) {
         Courier courier = courierMapping.mapToCourierEntity(dto);
         setParametersForCourier(courier);
         courierRepository.save(courier);
-        dto.setCourierId(courier.getId());
+        return new CourierDto.MainCourierDto(
+                courier.getId(),
+                dto.courierType(),
+                dto.regions(),
+                dto.workingHours()
+        );
     }
 
     @Override
-    public CourierDto getCourierById(Long id) {
+    public CourierDto.MainCourierDto getCourierById(Long id) {
         return courierMapping.mapToCourierDto(
                 courierRepository.findById(id)
                         .orElse(new Courier()));
     }
 
     @Override
-    public CouriersAssignDto getCouriersWithOrders(LocalDate date, Long courierId) {
-        CouriersAssignDto response = new CouriersAssignDto(date.toString());
+    public CourierDto.GetCouriersAssignOrdersResponse getCouriersWithOrders(LocalDate date, Long courierId) {
+        CourierDto.GetCouriersAssignOrdersResponse response = new CourierDto.GetCouriersAssignOrdersResponse(date.toString(), new ArrayList<>());
         if (courierId == 0) {
             List<Courier> couriers = courierRepository.findAll();
             for (Courier courier : couriers) {
@@ -76,35 +79,35 @@ public class CourierServiceImpl implements CourierService{
         return response;
     }
 
-    private void getOrdersAssignCourier(Courier courier, CouriersAssignDto response) {
-        OrdersDto couriersDto = new OrdersDto(courier.getId());
+    private void getOrdersAssignCourier(Courier courier, CourierDto.GetCouriersAssignOrdersResponse response) {
+        OrderDto.OrdersDto couriersDto = new OrderDto.OrdersDto(courier.getId(), new ArrayList<>());
         for (OrderGroup group : courier.getOrderGroups()) {
-            OrderGroupDto orderGroupDto = new OrderGroupDto(group.getId());
+            OrderDto.OrderGroupDto orderGroupDto = new OrderDto.OrderGroupDto(group.getId(), new ArrayList<>());
             for (Order order : group.getOrders()) {
-                orderGroupDto.getOrders().add(orderMapping.mapToOrderDto(order));
+                orderGroupDto.orders().add(orderMapping.mapToOrderDto(order));
             }
-            couriersDto.getOrderGroupDto().add(orderGroupDto);
+            couriersDto.orderGroupDto().add(orderGroupDto);
         }
-        response.getCouriers().add(couriersDto);
+        response.couriers().add(couriersDto);
     }
 
     @Override
-    public CourierMetaInfoDto getRatingAndEarning(Long courierId, LocalDate startDate, LocalDate endDate) {
+    public CourierDto.GetCourierMetaInfoResponse getRatingAndEarning(Long courierId, LocalDate startDate, LocalDate endDate) {
         Courier courier = courierRepository.findById(courierId).orElseThrow();
 
         if (courier.getOrderGroups().isEmpty()) {
             throw new NullPointerException();
         }
 
-        CourierDto dto = courierMapping.mapToCourierDto(courier);
-        CourierMetaInfoDto courierMetaInfoDto = new CourierMetaInfoDto(
-                dto.getCourierId(),
-                dto.getCourierType(),
-                dto.getRegions(),
-                dto.getWorkingHours());
-        courierMetaInfoDto.setEarnings(getEarningByCourier(courier));
-        courierMetaInfoDto.setRating(getRatingByCourier(courier, startDate, endDate));
-        return courierMetaInfoDto;
+        CourierDto.MainCourierDto dto = courierMapping.mapToCourierDto(courier);
+
+        return new CourierDto.GetCourierMetaInfoResponse(
+                dto.courierId(),
+                dto.courierType(),
+                dto.regions(),
+                dto.workingHours(),
+                getRatingByCourier(courier, startDate, endDate),
+                getEarningByCourier(courier));
     }
 
     private Integer getRatingByCourier(Courier courier, LocalDate startDate, LocalDate endDate) {

@@ -6,15 +6,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.yandexlavka.entity.dto.assignments.CouriersAssignDto;
 import ru.yandex.yandexlavka.entity.dto.CourierDto;
-import ru.yandex.yandexlavka.entity.dto.CourierMetaInfoDto;
-import ru.yandex.yandexlavka.entity.dto.request.CreateCourierRequest;
-import ru.yandex.yandexlavka.entity.dto.response.CreateCourierResponse;
-import ru.yandex.yandexlavka.entity.dto.response.GetCouriersResponse;
 import ru.yandex.yandexlavka.services.courierservice.CourierService;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -29,39 +25,43 @@ public class CourierController {
             @RequestParam(value = "limit", defaultValue = "1") @Min(1) Integer limit
     ) {
         try {
-            List<CourierDto> couriers = courierService.getAllCouriers(offset, limit);
-            GetCouriersResponse response = new GetCouriersResponse(couriers, offset, limit);
+            List<CourierDto.MainCourierDto> couriers = courierService.getAllCouriers(offset, limit);
+            if (couriers.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            CourierDto.GetCourierResponse response = new CourierDto.GetCourierResponse(couriers, offset, limit);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     @CrossOrigin
     @GetMapping(value = "/couriers/{courier_id}", produces = "application/json")
-    public ResponseEntity<?> getCourierById(@PathVariable Long id) {
+    public ResponseEntity<?> getCourierById(@PathVariable(value = "courier_id") Long courierId) {
         try {
-            CourierDto courier = courierService.getCourierById(id);
-            return new ResponseEntity<>(courier, HttpStatus.OK);
-        } catch (Exception ex) {
+            CourierDto.MainCourierDto response = courierService.getCourierById(courierId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (RuntimeException ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     @CrossOrigin
     @PostMapping(value = "/couriers", produces = "application/json")
-    public ResponseEntity<?> addCouriers(@RequestBody CreateCourierRequest request) {
+    public ResponseEntity<?> addCouriers(@RequestBody CourierDto.CreateCourierRequest request) {
         if (request == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        for (CourierDto dto : request.getCouriers()) {
+        List<CourierDto.MainCourierDto> dtoList = new ArrayList<>();
+        for (CourierDto.MainCourierDto dto : request.couriers()) {
             try {
-                courierService.addCourier(dto);
-            } catch (Exception ex) {
+                dtoList.add(courierService.addCourier(dto));
+            } catch (RuntimeException ex) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
-        CreateCourierResponse response = new CreateCourierResponse(request.getCouriers());
+        CourierDto.CreateCourierResponse response = new CourierDto.CreateCourierResponse(dtoList);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -71,10 +71,13 @@ public class CourierController {
             @RequestParam(value = "date", defaultValue = "#{T(java.time.LocalDate).now()}")
             @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @RequestParam(value = "courier_id", defaultValue = "0") Long courierId) {
-        CouriersAssignDto response;
+        CourierDto.GetCouriersAssignOrdersResponse response;
         try {
             response = courierService.getCouriersWithOrders(date, courierId);
-        } catch (Exception ex) {
+            if (response.couriers().isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+        } catch (RuntimeException ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -83,16 +86,16 @@ public class CourierController {
     @CrossOrigin
     @GetMapping(value = "/couriers/meta-info/{courier_id}", produces = "application/json")
     public ResponseEntity<?> getRatingOfCourier(
-            @PathVariable Long courier_id,
+            @PathVariable(value = "courier_id") Long courierId,
             @RequestParam(value = "start_date")
             @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(value = "end_date")
             @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate)
     {
-        CourierMetaInfoDto response;
+        CourierDto.GetCourierMetaInfoResponse response;
         try {
-            response = courierService.getRatingAndEarning(courier_id, startDate, endDate);
-        } catch (Exception exception) {
+            response = courierService.getRatingAndEarning(courierId, startDate, endDate);
+        } catch (RuntimeException ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(response, HttpStatus.OK);

@@ -6,9 +6,8 @@ import ru.yandex.yandexlavka.entity.Courier;
 import ru.yandex.yandexlavka.entity.IntervalTime;
 import ru.yandex.yandexlavka.entity.Order;
 import ru.yandex.yandexlavka.entity.OrderGroup;
-import ru.yandex.yandexlavka.entity.dto.assignments.CouriersAssignDto;
-import ru.yandex.yandexlavka.entity.dto.assignments.OrderGroupDto;
-import ru.yandex.yandexlavka.entity.dto.assignments.OrdersDto;
+import ru.yandex.yandexlavka.entity.dto.CourierDto;
+import ru.yandex.yandexlavka.entity.dto.OrderDto;
 import ru.yandex.yandexlavka.repositories.CourierRepository;
 import ru.yandex.yandexlavka.repositories.OrderGroupRepository;
 import ru.yandex.yandexlavka.repositories.OrderRepository;
@@ -31,7 +30,7 @@ public class AssignOrderServiceImpl implements AssignOrderService {
     private OrderMapping orderMapping;
 
     @Override
-    public List<CouriersAssignDto> assignOrders(LocalDate date) {
+    public List<CourierDto.GetCouriersAssignOrdersResponse> assignOrders(LocalDate date) {
         List<Courier> couriers = courierRepository.findAll();
         List<Order> orders = orderRepository.findAll();
 
@@ -75,19 +74,19 @@ public class AssignOrderServiceImpl implements AssignOrderService {
         return response(couriers, date);
     }
 
-    private List<CouriersAssignDto> response(List<Courier> couriers, LocalDate date) {
-        CouriersAssignDto courierDto = new CouriersAssignDto(date.toString());
+    private List<CourierDto.GetCouriersAssignOrdersResponse> response(List<Courier> couriers, LocalDate date) {
+        CourierDto.GetCouriersAssignOrdersResponse courierDto = new CourierDto.GetCouriersAssignOrdersResponse(date.toString(), new ArrayList<>());
         for (Courier courier : couriers) {
             if (courier.getOrderGroups().size() > 0) {
-                OrdersDto orderDto = new OrdersDto(courier.getId());
+                OrderDto.OrdersDto orderDto = new OrderDto.OrdersDto(courier.getId(), new ArrayList<>());
                 for (OrderGroup orderGroup : courier.getOrderGroups()) {
-                    OrderGroupDto orderGroupDto = new OrderGroupDto(orderGroup.getId());
+                    OrderDto.OrderGroupDto orderGroupDto = new OrderDto.OrderGroupDto(orderGroup.getId(), new ArrayList<>());
                     for (Order order : orderGroup.getOrders()) {
-                        orderGroupDto.getOrders().add(orderMapping.mapToOrderDto(order));
+                        orderGroupDto.orders().add(orderMapping.mapToOrderDto(order));
                     }
-                    orderDto.getOrderGroupDto().add(orderGroupDto);
+                    orderDto.orderGroupDto().add(orderGroupDto);
                 }
-                courierDto.getCouriers().add(orderDto);
+                courierDto.couriers().add(orderDto);
             }
         }
         return new ArrayList<>(List.of(courierDto));
