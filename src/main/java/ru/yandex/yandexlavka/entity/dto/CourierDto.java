@@ -11,6 +11,13 @@ import java.util.List;
 @Data
 public class CourierDto {
 
+    /**
+     * Основная неперсистентная сущность курьера
+     * @param courierId id
+     * @param courierType тип
+     * @param regions регионы
+     * @param workingHours рабочие часы
+     */
     public record MainCourierDto(
             @JsonProperty("courier_id")
             Long courierId,
@@ -26,17 +33,31 @@ public class CourierDto {
             List<@NotBlank String> workingHours) {
     }
 
+    /**
+     * Запрос на создание курьеров
+     * @param couriers список курьеров
+     */
     public record CreateCourierRequest(
             @NotEmpty
             @JsonProperty("couriers")
             List<@Valid MainCourierDto> couriers) {
     }
 
+    /**
+     * Ответ на запрос {@link CreateCourierRequest}
+     * @param couriers созданные курьеры
+     */
     public record CreateCourierResponse(
             @JsonProperty("couriers")
             List<MainCourierDto> couriers) {
     }
 
+    /**
+     * Ответ на запрос получения всех курьеров
+     * @param couriers курьеры
+     * @param limit количество строк
+     * @param offset указатель с какой строки начинать выборку
+     */
     public record GetCourierResponse(
             @JsonProperty("couriers")
             List<MainCourierDto> couriers,
@@ -46,6 +67,15 @@ public class CourierDto {
             int offset) {
     }
 
+    /**
+     * Ответ на расчет рейтинга и заработка курьера
+     * @param courierId id курьера
+     * @param courierType тип курьера
+     * @param regions регионы
+     * @param workingHours рабочие часы
+     * @param rating рейтинг
+     * @param earnings заработок
+     */
     public record GetCourierMetaInfoResponse(
             @JsonProperty("courier_id")
             Long courierId,
@@ -61,6 +91,11 @@ public class CourierDto {
             Integer earnings) {
     }
 
+    /**
+     * Ответ на получение распределенных заказов
+     * @param date дата
+     * @param couriers курьеры
+     */
     public record GetCouriersAssignOrdersResponse(
             @JsonProperty("date")
             String date,

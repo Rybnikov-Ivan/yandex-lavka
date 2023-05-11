@@ -23,6 +23,13 @@ public class OrderServiceImpl implements OrderService {
     private CourierRepository courierRepository;
     @Autowired
     private OrderMapping orderMapping;
+
+    /**
+     * Получение всех заказов
+     * @param offset
+     * @param limit
+     * @return List {@link OrderDto.MainOrderDto}
+     */
     @Override
     public List<OrderDto.MainOrderDto> getAllOrders(int offset, int limit) {
         return orderRepository.findAll(PageRequest.of(offset, limit)).stream()
@@ -31,6 +38,11 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    /**
+     * Добавление заказа
+     * @param orderDto
+     * @return {@link OrderDto.MainOrderDto}
+     */
     @Override
     public OrderDto.MainOrderDto addOrder(OrderDto.MainOrderDto orderDto) {
         Order order = orderMapping.mapToOrderEntity(orderDto);
@@ -44,6 +56,11 @@ public class OrderServiceImpl implements OrderService {
                 orderDto.completedTime());
     }
 
+    /**
+     * Получение заказа по Id
+     * @param id
+     * @return {@link OrderDto.MainOrderDto}
+     */
     @Override
     public OrderDto.MainOrderDto getOrderById(Long id) {
         return orderMapping.mapToOrderDto(

@@ -8,6 +8,9 @@ import ru.yandex.yandexlavka.entity.enums.CourierType;
 
 import java.util.List;
 
+/**
+ * Курьер
+ */
 @Getter
 @Setter
 @AllArgsConstructor

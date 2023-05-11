@@ -7,6 +7,9 @@ import lombok.Setter;
 
 import java.time.LocalTime;
 
+/**
+ * Интервал времени
+ */
 @Getter
 @Setter
 @AllArgsConstructor

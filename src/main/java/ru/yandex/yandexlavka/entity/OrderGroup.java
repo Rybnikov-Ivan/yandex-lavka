@@ -7,6 +7,9 @@ import lombok.Setter;
 
 import java.util.List;
 
+/**
+ * Группа заказов
+ */
 @Getter
 @Setter
 @AllArgsConstructor
