@@ -10,7 +10,6 @@ import ru.yandex.yandexlavka.entity.dto.CourierDto;
 import ru.yandex.yandexlavka.entity.dto.OrderDto;
 import ru.yandex.yandexlavka.entity.enums.CourierType;
 import ru.yandex.yandexlavka.repositories.CourierRepository;
-import ru.yandex.yandexlavka.repositories.OrderRepository;
 import ru.yandex.yandexlavka.utils.Constants;
 import ru.yandex.yandexlavka.utils.mapping.CourierMapping;
 import ru.yandex.yandexlavka.utils.mapping.OrderMapping;
@@ -27,12 +26,16 @@ public class CourierServiceImpl implements CourierService{
     @Autowired
     private CourierRepository courierRepository;
     @Autowired
-    private OrderRepository orderRepository;
-    @Autowired
     private CourierMapping courierMapping;
     @Autowired
     private OrderMapping orderMapping;
 
+    /**
+     * Получение всех курьеров
+     * @param offset
+     * @param limit
+     * @return List {@link CourierDto.MainCourierDto}
+     */
     @Override
     public List<CourierDto.MainCourierDto> getAllCouriers(int offset, int limit) {
         return courierRepository.findAll(PageRequest.of(offset, limit))
@@ -40,6 +43,11 @@ public class CourierServiceImpl implements CourierService{
                 .toList();
     }
 
+    /**
+     * Добавление курьеров
+     * @param dto
+     * @return {@link CourierDto.MainCourierDto}
+     */
     @Override
     public CourierDto.MainCourierDto addCourier(CourierDto.MainCourierDto dto) {
         Courier courier = courierMapping.mapToCourierEntity(dto);
@@ -53,6 +61,11 @@ public class CourierServiceImpl implements CourierService{
         );
     }
 
+    /**
+     * Получение курьера по Id
+     * @param id
+     * @return {@link CourierDto.MainCourierDto}
+     */
     @Override
     public CourierDto.MainCourierDto getCourierById(Long id) {
         return courierMapping.mapToCourierDto(
@@ -60,6 +73,12 @@ public class CourierServiceImpl implements CourierService{
                         .orElse(new Courier()));
     }
 
+    /**
+     * Получение курьеров с заказами, определенными на него
+     * @param date
+     * @param courierId
+     * @return {@link CourierDto.GetCouriersAssignOrdersResponse}
+     */
     @Override
     public CourierDto.GetCouriersAssignOrdersResponse getCouriersWithOrders(LocalDate date, Long courierId) {
         CourierDto.GetCouriersAssignOrdersResponse response = new CourierDto.GetCouriersAssignOrdersResponse(date.toString(), new ArrayList<>());
@@ -79,6 +98,11 @@ public class CourierServiceImpl implements CourierService{
         return response;
     }
 
+    /**
+     * Добавление тела в ответ сервиса getCouriersWithOrders
+     * @param courier
+     * @param response
+     */
     private void getOrdersAssignCourier(Courier courier, CourierDto.GetCouriersAssignOrdersResponse response) {
         OrderDto.OrdersDto couriersDto = new OrderDto.OrdersDto(courier.getId(), new ArrayList<>());
         for (OrderGroup group : courier.getOrderGroups()) {
@@ -91,6 +115,13 @@ public class CourierServiceImpl implements CourierService{
         response.couriers().add(couriersDto);
     }
 
+    /**
+     * Получение рейтинга и суммы заработанных денег
+     * @param courierId
+     * @param startDate
+     * @param endDate
+     * @return {@link CourierDto.GetCourierMetaInfoResponse}
+     */
     @Override
     public CourierDto.GetCourierMetaInfoResponse getRatingAndEarning(Long courierId, LocalDate startDate, LocalDate endDate) {
         Courier courier = courierRepository.findById(courierId).orElseThrow();
@@ -110,6 +141,13 @@ public class CourierServiceImpl implements CourierService{
                 getEarningByCourier(courier));
     }
 
+    /**
+     * Расчет рейтинга курьера
+     * @param courier
+     * @param startDate
+     * @param endDate
+     * @return Integer
+     */
     private Integer getRatingByCourier(Courier courier, LocalDate startDate, LocalDate endDate) {
         Period period = Period.between(startDate, endDate);
         int hours = (period.getYears() * 8760) + (period.getMonths() * 672) + (period.getDays() * 24);
@@ -120,6 +158,11 @@ public class CourierServiceImpl implements CourierService{
         return (countOrder / hours) * courier.getRatingRate();
     }
 
+    /**
+     * Расчет заработка курьера
+     * @param courier
+     * @return Integer
+     */
     private Integer getEarningByCourier(Courier courier) {
         BigDecimal sum = BigDecimal.ZERO;
         BigDecimal earningRate = BigDecimal.valueOf(courier.getEarningRate());
@@ -139,6 +182,10 @@ public class CourierServiceImpl implements CourierService{
         return sum.intValue();
     }
 
+    /**
+     * Установка свойств по допустимым параметрам
+     * @param courier
+     */
     private void setParametersForCourier(Courier courier) {
         if (courier.getCourierType().equals(CourierType.AUTO)) {
             courier.setMaxWeight(Constants.LIMIT_WEIGHT_AUTO);

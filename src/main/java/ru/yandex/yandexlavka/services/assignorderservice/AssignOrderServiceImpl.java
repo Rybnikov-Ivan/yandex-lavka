@@ -29,6 +29,11 @@ public class AssignOrderServiceImpl implements AssignOrderService {
     @Autowired
     private OrderMapping orderMapping;
 
+    /**
+     * Функция, запускающая процесс распределения заказов по курьерам
+     * @param date
+     * @return {@link CourierDto.GetCouriersAssignOrdersResponse}
+     */
     @Override
     public List<CourierDto.GetCouriersAssignOrdersResponse> assignOrders(LocalDate date) {
         List<Courier> couriers = courierRepository.findAll();
@@ -74,6 +79,12 @@ public class AssignOrderServiceImpl implements AssignOrderService {
         return response(couriers, date);
     }
 
+    /**
+     * Генерация ответа метода распределения заказов
+     * @param couriers
+     * @param date
+     * @return List {@link CourierDto.GetCouriersAssignOrdersResponse}
+     */
     private List<CourierDto.GetCouriersAssignOrdersResponse> response(List<Courier> couriers, LocalDate date) {
         CourierDto.GetCouriersAssignOrdersResponse courierDto = new CourierDto.GetCouriersAssignOrdersResponse(date.toString(), new ArrayList<>());
         for (Courier courier : couriers) {
@@ -92,6 +103,12 @@ public class AssignOrderServiceImpl implements AssignOrderService {
         return new ArrayList<>(List.of(courierDto));
     }
 
+    /**
+     * Группировка курьеров по заказам, совпадающим по временным интервалам
+     * @param couriers
+     * @param orders
+     * @return Map
+     */
     private Map<Courier, List<Order>> groupCourierByOrder(List<Courier> couriers, List<Order> orders) {
         Map<Courier, List<Order>> map = new HashMap<>();
         for (Courier courier : couriers) {
@@ -120,6 +137,11 @@ public class AssignOrderServiceImpl implements AssignOrderService {
         return map;
     }
 
+    /**
+     * Получение ключей словаря в порядке убывания количества заказов
+     * @param mapIt
+     * @return List {@link IntervalTime}
+     */
     private List<IntervalTime> getKeys(Map<IntervalTime, List<Order>> mapIt) {
         Map<IntervalTime, List<Order>> linkedHashMap = mapIt.entrySet().stream()
                 .sorted(Comparator.comparing(e -> e.getValue().size()))
@@ -134,6 +156,12 @@ public class AssignOrderServiceImpl implements AssignOrderService {
         return allKeys;
     }
 
+    /**
+     * Распределение заказов по группам
+     * @param courier
+     * @param sortedListByRegion
+     * @return List {@link Order}
+     */
     private List<Order> calculateGroup(Courier courier, List<Order> sortedListByRegion) {
         float sumWeight = 0;
         int sumCount = 0;
@@ -148,6 +176,12 @@ public class AssignOrderServiceImpl implements AssignOrderService {
         return orders;
     }
 
+    /**
+     * Сохранение пользователя и группы заказов
+     * @param courier
+     * @param orderGroup
+     * @param orders
+     */
     private void save(Courier courier, OrderGroup orderGroup, List<Order> orders) {
         orderGroup.setOrders(orders);
         orderGroupRepository.save(orderGroup);
@@ -159,6 +193,12 @@ public class AssignOrderServiceImpl implements AssignOrderService {
         courierRepository.save(courier);
     }
 
+    /**
+     * Функция, проверяющая совпадение интервалов курьера и заказа
+     * @param courierIt
+     * @param orderIt
+     * @return true or false
+     */
     private boolean isIntersectionTime(IntervalTime courierIt, IntervalTime orderIt) {
         if (orderIt.getEndTime().isBefore(courierIt.getStartTime()) || orderIt.getEndTime().equals(courierIt.getStartTime())) {
             return false;
